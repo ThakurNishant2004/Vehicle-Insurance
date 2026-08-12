@@ -150,35 +150,18 @@ vehicle-insurance/
 
 <div align="center">
 
-### 🌐 1. Application User Interface
-*FastAPI Web Interface for entering vehicle and customer data*<br>
-<img src="assets/Screenshot 2026-08-12 223445.png" width="800" alt="FastAPI Web Interface">
+### 🔷 FastAPI Web Interface
+*Input form for customer & vehicle attributes*
 
-### 🎯 2. Real-Time Prediction Output
-*Model successfully processing form data and returning a prediction status*<br>
-<img src="assets/Screenshot 2026-08-12 223518.png" width="800" alt="Prediction Result">
+### 🔷 Prediction Result
+*Live prediction output — `Response-Yes` / `Response-No`*
 
-### 💻 3. MLOps Codebase
-*Modularized training pipeline architecture inside VS Code*<br>
-<img src="assets/Screenshot 2026-08-12 223852.png" width="800" alt="Training Pipeline Code">
-
-### ☁️ 4. AWS EC2 Server
-*Live Ubuntu instance successfully running the deployed application*<br>
-<img src="assets/Screenshot 2026-08-12 223550.png" width="800" alt="AWS EC2 Dashboard">
-
-### 🐳 5. Amazon ECR (Elastic Container Registry)
-*Docker images successfully pushed via CI/CD pipeline*<br>
-<img src="assets/Screenshot 2026-08-12 223654.png" width="800" alt="Amazon ECR">
-
-### 🗄️ 6. AWS S3 Model Registry
-*The `model.pkl` artifact safely stored in the cloud after evaluation*<br>
-<img src="assets/Screenshot 2026-08-12 223744.png" width="800" alt="Amazon S3 Model Registry">
-
-### ⚙️ 7. GitHub Actions Runner
-*Self-hosted EC2 runner actively listening for continuous deployment triggers*<br>
-<img src="assets/Screenshot 2026-08-12 224049.png" width="800" alt="GitHub Actions Runner">
+### 🔷 AWS Deployment
+*EC2 instance running the app · ECR image registry · S3 model registry*
 
 </div>
+
+> 💡 screenshots added to an `src/assets/`  folder in the repo .
 
 ---
 
