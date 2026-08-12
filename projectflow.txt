@@ -157,3 +157,22 @@
 
 
 cd actions-runner
+
+
+35. Pausing the Server (Stop Billing):
+        * Go to AWS console and open the EC2 dashboard
+        * Navigate to Instances on the left sidebar
+        * Select your instance >> click Instance state (top right) >> Stop instance (Warning: Never click "Terminate instance")
+
+36. Resuming the Server (Restart Work):
+        * Go to AWS console and open the EC2 dashboard
+        * Navigate to Instances >> select your instance >> click Instance state >> Start instance
+        * Wait about 60 seconds for the server to fully boot up
+
+37. The "Back to Work" Checklist:
+        * Go to your EC2 instance details >> copy the newly assigned Public IPv4 address (AWS gives a new IP on every restart)
+        * Reconnect your terminal via SSH using the new IP: ssh -i "your-key.pem" ubuntu@<NEW_IP>
+        * Restart your container manually by running: docker start fastapi-app (OR trigger your CI/CD pipeline by pushing a new commit to GitHub)
+        * View your live application in the browser using the new IP: http://<NEW_IP>:5000
+
+Note: Your GitHub runner is a background service and will auto-connect to GitHub on boot. You do not need to restart it.
