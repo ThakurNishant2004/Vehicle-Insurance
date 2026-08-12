@@ -16,7 +16,6 @@ from src.pipline.training_pipeline import TrainPipeline
 # Initialize FastAPI application
 app = FastAPI()
 
-
 # Mount the 'static' directory for serving static files (like CSS)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -54,7 +53,6 @@ class DataForm:
         self.Vehicle_Age_gt_2_Years: Optional[int] = None
         self.Vehicle_Damage_Yes: Optional[int] = None
 
-
     async def get_vehicle_data(self):
         """
         Method to retrieve and assign form data to class attributes.
@@ -79,8 +77,12 @@ async def index(request: Request):
     """
     Renders the main HTML form page for vehicle data input.
     """
+    # FIX APPLIED HERE: Added explicit keyword arguments
     return templates.TemplateResponse(
-            "vehicledata.html",{"request": request, "context": "Rendering"})
+        request=request, 
+        name="vehicledata.html",
+        context={"request": request, "context": "Rendering"}
+    )
 
 # Route to trigger the model training process
 @app.get("/train")
@@ -132,10 +134,11 @@ async def predictRouteClient(request: Request):
         # Interpret the prediction result as 'Response-Yes' or 'Response-No'
         status = "Response-Yes" if value == 1 else "Response-No"
 
-        # Render the same HTML page with the prediction result
+        # FIX APPLIED HERE: Added explicit keyword arguments
         return templates.TemplateResponse(
-            "vehicledata.html",
-            {"request": request, "context": status},
+            request=request,
+            name="vehicledata.html",
+            context={"request": request, "context": status}
         )
         
     except Exception as e:
@@ -144,5 +147,3 @@ async def predictRouteClient(request: Request):
 # Main entry point to start the FastAPI server
 if __name__ == "__main__":
     app_run(app, host=APP_HOST, port=APP_PORT)
-
-
