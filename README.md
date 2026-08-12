@@ -103,7 +103,7 @@ flowchart TD
 
 | Category | Technology | Purpose |
 |---|---|---|
-| **Language** | Python 3.10 | Core programming language |
+| **Language** | Python 3.12 | Core programming language |
 | **Backend / API** | FastAPI, Uvicorn | High-performance inference serving |
 | **Database** | MongoDB Atlas | Centralized remote data storage |
 | **Data Science** | Pandas, Scikit-Learn | Data manipulation and predictive modeling |
@@ -150,19 +150,35 @@ vehicle-insurance/
 
 <div align="center">
 
-### 🔷 FastAPI Web Interface
-*Input form for customer & vehicle attributes*
+### 🌐 1. Application User Interface
+*FastAPI Web Interface for entering vehicle and customer data*<br>
+<img src="assets/Screenshot 2026-08-12 223445.png" width="800" alt="FastAPI Web Interface">
 
-### 🔷 Prediction Result
-*Live prediction output — `Response-Yes` / `Response-No`*
+### 🎯 2. Real-Time Prediction Output
+*Model successfully processing form data and returning a prediction status*<br>
+<img src="assets/Screenshot 2026-08-12 223518.png" width="800" alt="Prediction Result">
 
-### 🔷 AWS Deployment
-*EC2 instance running the app · ECR image registry · S3 model registry*
+### 💻 3. MLOps Codebase
+*Modularized training pipeline architecture inside VS Code*<br>
+<img src="assets/Screenshot 2026-08-12 223852.png" width="800" alt="Training Pipeline Code">
+
+### ☁️ 4. AWS EC2 Server
+*Live Ubuntu instance successfully running the deployed application*<br>
+<img src="assets/Screenshot 2026-08-12 223550.png" width="800" alt="AWS EC2 Dashboard">
+
+### 🐳 5. Amazon ECR (Elastic Container Registry)
+*Docker images successfully pushed via CI/CD pipeline*<br>
+<img src="assets/Screenshot 2026-08-12 223654.png" width="800" alt="Amazon ECR">
+
+### 🗄️ 6. AWS S3 Model Registry
+*The `model.pkl` artifact safely stored in the cloud after evaluation*<br>
+<img src="assets/Screenshot 2026-08-12 223744.png" width="800" alt="Amazon S3 Model Registry">
+
+### ⚙️ 7. GitHub Actions Runner
+*Self-hosted EC2 runner actively listening for continuous deployment triggers*<br>
+<img src="assets/Screenshot 2026-08-12 224049.png" width="800" alt="GitHub Actions Runner">
 
 </div>
-
-> 💡 Add your screenshots to an `assets/` or `images/` folder in the repo and embed them like:
-> `![FastAPI Web Interface](assets/webform.png)`
 
 ---
 
@@ -364,7 +380,7 @@ Access the web interface at **http://localhost:5080** (or your configured port).
 5. Launch an **EC2 instance**:
    - Name: `vehicledata-machine`
    - AMI: Ubuntu Server 24.04 (Free Tier)
-   - Type: `t2.medium`
+   - Type: `t3.small`
    - New key pair: `proj1key`
    - Allow HTTP + HTTPS traffic, 30 GB storage
    - Connect via **EC2 Instance Connect**
@@ -389,7 +405,7 @@ Access the web interface at **http://localhost:5080** (or your configured port).
    - `AWS_DEFAULT_REGION`
    - `ECR_REPO`
 9. Push a commit — the CI/CD pipeline triggers automatically.
-10. Open **port 5080** on the EC2 security group: *Security → Security Groups → Edit inbound rules → Custom TCP → 5080 → 0.0.0.0/0*.
+10. Open **port 5000** on the EC2 security group: *Security → Security Groups → Edit inbound rules → Custom TCP → 5000 → 0.0.0.0/0*.
 11. Visit `http://<EC2-PUBLIC-IP>:5080` to see the app live. Trigger retraining anytime via the `/train` route.
 
 </details>
@@ -443,7 +459,7 @@ Since EC2 billing is usage-based, it's good practice to stop the instance when n
    docker start fastapi-app
    ```
    *(or simply push a new commit to trigger the CI/CD pipeline)*
-4. View the live app at `http://<NEW_IP>:5080`.
+4. View the live app at `http://<NEW_IP>:5000`.
 
 ---
 
