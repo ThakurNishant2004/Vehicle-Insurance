@@ -28,7 +28,9 @@
 - [Installation & Local Setup](#️-installation--local-setup)
 - [API Documentation](#-api-documentation)
 - [AI/ML Pipeline Details](#-aiml-pipeline-details)
+- [Complete Project Workflow](#️-complete-project-workflow)
 - [CI/CD Deployment Flow](#-cicd-deployment-flow)
+- [Managing the EC2 Server](#️-managing-the-ec2-server)
 - [Contributing](#-contributing)
 - [License](#-license)
 - [Author](#-author)
@@ -54,6 +56,7 @@ By containerizing the application with **Docker** and utilizing a **self-hosted 
 | ☁️ | **Cloud Model Registry** | Automated push/pull of serialized `model.pkl` artifacts via AWS S3 (`boto3`) |
 | ⚡ | **RESTful API Inference** | High-performance model serving with FastAPI + Uvicorn |
 | 🚢 | **Continuous Deployment** | Automated Docker builds pushed to Amazon ECR and deployed via a self-hosted EC2 runner |
+| 🔐 | **Secrets-Driven Config** | All credentials (Mongo, AWS) injected via environment variables / GitHub Secrets — nothing hardcoded |
 
 ---
 
@@ -70,6 +73,7 @@ flowchart TD
         DV --> DT[Data Transformation]
         DT --> MT[Model Trainer]
         MT --> ME[Model Evaluation]
+        ME --> MP[Model Pusher]
     end
 
     subgraph AWSCloud [AWS Cloud]
@@ -84,7 +88,7 @@ flowchart TD
     end
 
     DB -->|Fetch Data| DI
-    ME -->|Push model.pkl| S3
+    MP -->|Push model.pkl| S3
 
     Code[GitHub Repository] -->|CI/CD Actions| ECR
     ECR -->|Pull Image| EC2
@@ -105,7 +109,8 @@ flowchart TD
 | **Data Science** | Pandas, Scikit-Learn | Data manipulation and predictive modeling |
 | **Cloud Storage** | AWS S3 | Artifact and model registry |
 | **Containerization** | Docker, Amazon ECR | Application containerization and image registry |
-| **Deployment** | AWS EC2, GitHub Actions | Self-hosted runner for continuous deployment |
+| **Compute** | AWS EC2 (Ubuntu 24.04) | Self-hosted GitHub Actions runner + app host |
+| **CI/CD** | GitHub Actions | Automated build, push & deploy pipeline |
 
 ---
 
@@ -120,16 +125,23 @@ vehicle-insurance/
 │   └── eda_feature_engg.ipynb   # Exploratory data analysis
 ├── src/
 │   ├── components/              # Core pipeline steps (Ingestion, Validation, etc.)
+│   ├── configuration/           # MongoDB & AWS connection configs
+│   ├── data_access/              # DB → DataFrame access layer
 │   ├── entity/                  # Config, Artifact, and AWS S3 Estimator definitions
 │   ├── pipeline/                # training_pipeline.py and prediction_pipeline.py
-│   ├── utils/                   # Helper functions (main_utils.py)
+│   ├── utils/                    # Helper functions (main_utils.py)
+│   ├── logger/                   # Custom logging module
+│   ├── exception/                # Custom exception handling
 │   └── constants/                # Environment and project constants
 ├── static/                      # Frontend assets (CSS)
 ├── templates/                   # Jinja2 HTML templates
 ├── Dockerfile                   # Docker image blueprint
+├── .dockerignore
 ├── app.py                       # FastAPI application entry point
+├── demo.py                      # Local pipeline testing script
 ├── setup.py                     # Local package installation setup
-└── requirements.txt             # Python dependencies
+├── pyproject.toml               # Build system & package config
+└── requirements.txt              # Python dependencies
 ```
 
 ---
@@ -175,19 +187,32 @@ conda activate vehicle
 
 # Install dependencies and local packages
 pip install -r requirements.txt
+
+# Verify local packages installed correctly
+pip list
 ```
 
 ### 3. Environment Variables
 
-Create a `.env` file in the root directory and configure the following:
+Set the following as environment variables (or in a `.env` file):
 
-```env
-MONGODB_URL="mongodb+srv://<username>:<password>@cluster..."
-AWS_ACCESS_KEY_ID="your_aws_access_key"
-AWS_SECRET_ACCESS_KEY="your_aws_secret_key"
-AWS_DEFAULT_REGION="us-east-1"
-ECR_REPO="vehicleproj"
+**Bash**
+```bash
+export MONGODB_URL="mongodb+srv://<username>:<password>@cluster..."
+export AWS_ACCESS_KEY_ID="your_aws_access_key"
+export AWS_SECRET_ACCESS_KEY="your_aws_secret_key"
+export AWS_DEFAULT_REGION="us-east-1"
+export ECR_REPO="vehicleproj"
 ```
+
+**PowerShell**
+```powershell
+$env:MONGODB_URL="mongodb+srv://<username>:<password>@cluster..."
+$env:AWS_ACCESS_KEY_ID="your_aws_access_key"
+$env:AWS_SECRET_ACCESS_KEY="your_aws_secret_key"
+```
+
+> ⚠️ Make sure the `artifact/` directory is added to `.gitignore` — it's regenerated on every pipeline run and shouldn't be committed.
 
 ### 4. Run the Application
 
@@ -214,11 +239,160 @@ Access the web interface at **http://localhost:5080** (or your configured port).
 1. **Data Ingestion**
    Reads real-time data from MongoDB Atlas, converts key-value pairs into Pandas DataFrames, and performs train-test splits.
 
-2. **Validation & Transformation**
-   Enforces data integrity via a predefined `schema.yaml` and applies scaling/encoding through a custom `estimator.py`.
+2. **Data Validation**
+   Validates schema, column count, and data types against a predefined `schema.yaml`.
 
-3. **Model Registry**
-   Compares newly trained models against the existing S3 model using an `EVALUATION_CHANGED_THRESHOLD_SCORE` of **0.02**. If the new model performs better, `model.pkl` is pushed to the S3 bucket `vehicle-insurance-mlops-proj1`.
+3. **Data Transformation**
+   Applies scaling/encoding through a custom `estimator.py`, producing model-ready feature sets.
+
+4. **Model Trainer**
+   Trains a Scikit-Learn model on the transformed data and serializes it as `model.pkl`.
+
+5. **Model Evaluation**
+   Compares the newly trained model against the existing S3 model using an `EVALUATION_CHANGED_THRESHOLD_SCORE` of **0.02**.
+
+6. **Model Pusher**
+   If the new model outperforms the existing one, `model.pkl` is pushed to the S3 bucket `vehicle-insurance-mlops-proj1` under `MODEL_PUSHER_S3_KEY = "model-registry"`.
+
+---
+
+## 🗺️ Complete Project Workflow
+
+<details>
+<summary><strong>🧩 1. Project Scaffolding & Local Packages</strong></summary>
+
+1. Generate the project skeleton by running `template.py`.
+2. Configure `setup.py` and `pyproject.toml` so local packages (`src/`) can be imported as an installable module.
+3. Create and activate a Conda virtual environment:
+   ```bash
+   conda create -n vehicle python=3.10 -y
+   conda activate vehicle
+   ```
+4. Add all dependencies to `requirements.txt`, then install:
+   ```bash
+   pip install -r requirements.txt
+   ```
+5. Confirm local packages are installed correctly with `pip list`.
+
+</details>
+
+<details>
+<summary><strong>🍃 2. MongoDB Atlas Setup</strong></summary>
+
+1. Sign up for MongoDB Atlas and create a new project.
+2. Create a cluster using the free **M0** tier with default settings.
+3. Set up a database username and password.
+4. Under **Network Access**, whitelist `0.0.0.0/0` for access from anywhere.
+5. Grab the **connection string** from *Connect → Drivers → Python 3.6+*, and save it (with the password filled in).
+6. Create a `notebook/` directory, add `mongoDB_demo.ipynb`, and select the `vehicle` conda environment as the kernel.
+7. Load the dataset into the notebook and push it to MongoDB.
+8. Verify the upload in **Atlas → Database → Browse Collections** — data appears in key-value (JSON) format.
+
+</details>
+
+<details>
+<summary><strong>🧾 3. Logging, Exceptions & EDA</strong></summary>
+
+1. Implement a custom logger and validate it via `demo.py`.
+2. Implement a custom exception handler and validate it via `demo.py`.
+3. Perform Exploratory Data Analysis and feature engineering in a dedicated notebook.
+
+</details>
+
+<details>
+<summary><strong>📥 4. Data Ingestion Component</strong></summary>
+
+1. Declare pipeline-wide variables in `constants/__init__.py`.
+2. Implement `configuration/mongo_db_connections.py` for the MongoDB connection function.
+3. In `data_access/`, add `proj1_data.py` to fetch data via the Mongo connection and convert it into a DataFrame.
+4. Build out `entity/config_entity.py` up to `DataIngestionConfig`.
+5. Build out `entity/artifact_entity.py` up to `DataIngestionArtifact`.
+6. Implement `components/data_ingestion.py` and wire it into `training_pipeline.py`.
+7. Set the `MONGODB_URL` environment variable, then run `demo.py` to test.
+
+</details>
+
+<details>
+<summary><strong>🧪 5. Data Validation, Transformation & Model Trainer</strong></summary>
+
+1. Complete `utils/main_utils.py` and fully define `config/schema.yaml` with dataset metadata for validation.
+2. Build the **Data Validation** component following the same pattern as Data Ingestion.
+3. Build the **Data Transformation** component (adds an `estimator.py` to `entity/`).
+4. Build the **Model Trainer** component (extends the class in `entity/estimator.py`).
+
+</details>
+
+<details>
+<summary><strong>☁️ 6. AWS Setup for Model Evaluation & Registry</strong></summary>
+
+1. Log in to the AWS Console and set the region to `us-east-1`.
+2. Go to **IAM → Create User** (e.g. `firstproj`) and attach the `AdministratorAccess` policy.
+3. Generate a CLI **Access Key** for the user and download the credentials CSV.
+4. Export the credentials as environment variables:
+   ```bash
+   export AWS_ACCESS_KEY_ID="AWS_ACCESS_KEY_ID"
+   export AWS_SECRET_ACCESS_KEY="AWS_SECRET_ACCESS_KEY"
+   ```
+5. Add the access key, secret key, and region to `constants/__init__.py`, including:
+   ```python
+   MODEL_EVALUATION_CHANGED_THRESHOLD_SCORE: float = 0.02
+   MODEL_BUCKET_NAME = "my-model-mlopsproj"
+   MODEL_PUSHER_S3_KEY = "model-registry"
+   ```
+6. Implement `src/configuration/aws_connection.py` to talk to AWS S3.
+7. Create an S3 bucket: **Region:** `us-east-1` → General purpose → Name: `vehicle-insurance-mlops-proj1` → uncheck *Block all public access*.
+8. Implement `src/aws_storage/` for push/pull logic, and `entity/s3_estimator.py` for the S3 model I/O functions.
+
+</details>
+
+<details>
+<summary><strong>🔮 7. Model Evaluation, Model Pusher & Serving</strong></summary>
+
+1. Build the **Model Evaluation** and **Model Pusher** components.
+2. Scaffold the **Prediction Pipeline** and set up `app.py`.
+3. Add the `static/` and `templates/` directories for the web frontend.
+
+</details>
+
+<details>
+<summary><strong>🐳 8. CI/CD — Docker, ECR, EC2 & GitHub Actions</strong></summary>
+
+1. Add a `Dockerfile` and `.dockerignore` to the project root.
+2. Create `.github/workflows/aws.yaml` for the CI/CD pipeline.
+3. Create a second IAM user (e.g. `usvisa-user`) the same way as before, and generate its access keys.
+4. Create an **ECR repository** (`vehicleproj`) in `us-east-1` to store the Docker image — copy the repo URI.
+5. Launch an **EC2 instance**:
+   - Name: `vehicledata-machine`
+   - AMI: Ubuntu Server 24.04 (Free Tier)
+   - Type: `t2.medium`
+   - New key pair: `proj1key`
+   - Allow HTTP + HTTPS traffic, 30 GB storage
+   - Connect via **EC2 Instance Connect**
+6. Install Docker on the EC2 instance:
+   ```bash
+   sudo apt-get update -y
+   sudo apt-get upgrade -y
+
+   curl -fsSL https://get.docker.com -o get-docker.sh
+   sudo sh get-docker.sh
+   sudo usermod -aG docker ubuntu
+   newgrp docker
+   ```
+7. Register the EC2 instance as a **self-hosted GitHub Actions runner**:
+   - GitHub repo → **Settings → Actions → Runners → New self-hosted runner**
+   - Select Linux, then run the *Download* and *Configure* commands on the EC2 terminal
+   - Accept defaults for runner group/name/labels/work folder
+   - Run `./run.sh` to connect — confirm the runner shows as **Idle** in GitHub
+8. Add the following **GitHub Secrets** (`Settings → Secrets and variables → Actions`):
+   - `AWS_ACCESS_KEY_ID`
+   - `AWS_SECRET_ACCESS_KEY`
+   - `AWS_DEFAULT_REGION`
+   - `ECR_REPO`
+9. Push a commit — the CI/CD pipeline triggers automatically.
+10. Open **port 5080** on the EC2 security group: *Security → Security Groups → Edit inbound rules → Custom TCP → 5080 → 0.0.0.0/0*.
+11. Visit `http://<EC2-PUBLIC-IP>:5080` to see the app live. Trigger retraining anytime via the `/train` route.
+
+</details>
 
 ---
 
@@ -238,9 +412,38 @@ sequenceDiagram
     GA->>ECR: Push image
     GA->>EC2: Trigger deployment
     EC2->>ECR: Pull latest image
-    EC2->>EC2: Run container / restart service
-    EC2-->>Dev: App live at http://<EC2-IP>:5000
+    EC2->>EC2: docker run / restart container
+    EC2-->>Dev: App live at http://<EC2-IP>:5080
 ```
+
+---
+
+## 🖥️ Managing the EC2 Server
+
+Since EC2 billing is usage-based, it's good practice to stop the instance when not in use.
+
+### ⏸️ Pausing the Server (Stop Billing)
+1. AWS Console → **EC2 Dashboard → Instances**
+2. Select your instance → **Instance state → Stop instance**
+3. ⚠️ Never click **Terminate instance** — that deletes it permanently.
+
+### ▶️ Resuming the Server
+1. AWS Console → **EC2 Dashboard → Instances**
+2. Select your instance → **Instance state → Start instance**
+3. Wait ~60 seconds for it to fully boot.
+
+### ✅ "Back to Work" Checklist
+1. Copy the new **Public IPv4 address** (AWS assigns a new one on every restart).
+2. Reconnect via SSH:
+   ```bash
+   ssh -i "your-key.pem" ubuntu@<NEW_IP>
+   ```
+3. Restart the container:
+   ```bash
+   docker start fastapi-app
+   ```
+   *(or simply push a new commit to trigger the CI/CD pipeline)*
+4. View the live app at `http://<NEW_IP>:5080`.
 
 ---
 
