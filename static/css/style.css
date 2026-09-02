@@ -1,4 +1,4 @@
-/* styles.css */
+/* styles.css
 body {
     font-family: Arial, sans-serif;
     display: flex;
@@ -70,4 +70,239 @@ button:hover {
 
 .result h2 {
     color: #007bff;
+} */
+
+
+
+
+
+/* style.css — served from /static/css/style.css (FastAPI StaticFiles mount). Path unchanged. */
+
+/* style.css — served from /static/css/style.css (FastAPI StaticFiles mount). Path unchanged. */
+
+:root {
+    --ink: #10233F;
+    --steel: #2F5D82;
+    --steel-dark: #1F4560;
+    --fog: #EEF2F6;
+    --cloud: #FFFFFF;
+    --slate: #5B6B79;
+    --line: #DCE3EA;
+    --amber: #B9711F;
+    --amber-text: #96591A;
+    --amber-soft: #FBF1E6;
+    --result-bg: #EAF3EF;
+    --result-border: #2E8B67;
+    --result-text: #1F6F52;
+    --radius: 10px;
+    --shadow: 0 10px 30px rgba(16, 35, 63, 0.08);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--fog);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Header ---------- */
+.page-header {
+    background-color: var(--ink);
+    color: var(--cloud);
+    padding: 48px 24px 56px;
+    text-align: center;
+}
+
+.page-header__inner {
+    max-width: 560px;
+    margin: 0 auto;
+}
+
+.page-header__logo {
+    height: 32px;
+    margin-bottom: 16px;
+}
+
+.page-header h1 {
+    margin: 0 0 10px;
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.page-header__subtitle {
+    margin: 0;
+    color: #B7C4D6;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+/* ---------- Card / layout ---------- */
+.container {
+    max-width: 560px;
+    margin: -32px auto 48px;
+    background-color: var(--cloud);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 32px;
+}
+
+/* ---------- Form groups ---------- */
+.predict-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.field-group {
+    border: 0;
+    padding: 0;
+    margin: 0 0 28px;
+}
+
+.field-group + .field-group {
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+}
+
+.field-group legend {
+    padding: 0 0 16px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--slate);
+}
+
+/* Grid lives on a plain div inside the fieldset, not on the fieldset/legend
+   themselves — <legend> as a grid item is handled inconsistently across
+   browsers, so this keeps the grouping semantics safe everywhere. */
+.field-group__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px 20px;
+    min-width: 0;
+}
+
+@media (min-width: 560px) {
+    .field-group__grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .field--full {
+        grid-column: 1 / -1;
+    }
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: left;
+}
+
+label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+input[type="number"] {
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    color: var(--ink);
+    background-color: var(--cloud);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input[type="number"]:focus {
+    outline: none;
+    border-color: var(--steel);
+    box-shadow: 0 0 0 3px rgba(47, 93, 130, 0.15);
+}
+
+/* ---------- Buttons ---------- */
+button {
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    padding: 13px 20px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.predict-form button[type="submit"] {
+    margin-top: 8px;
+    background-color: var(--steel);
+    color: var(--cloud);
+}
+
+.predict-form button[type="submit"]:hover {
+    background-color: var(--steel-dark);
+}
+
+button:focus-visible {
+    outline: 2px solid var(--steel);
+    outline-offset: 2px;
+}
+
+/* ---------- Train model (secondary action) ---------- */
+.train-form {
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    text-align: left;
+}
+
+.train-form__hint {
+    margin: 0 0 12px;
+    font-size: 0.85rem;
+    color: var(--slate);
+}
+
+.train-button {
+    background-color: transparent;
+    color: var(--amber-text);
+    border: 1px solid var(--amber);
+}
+
+.train-button:hover {
+    background-color: var(--amber-soft);
+}
+
+.train-button:focus-visible {
+    outline: 2px solid var(--amber);
+    outline-offset: 2px;
+}
+
+/* ---------- Result ---------- */
+.result {
+    margin-top: 28px;
+    padding: 16px 18px;
+    background-color: var(--result-bg);
+    border-left: 3px solid var(--result-border);
+    border-radius: 6px;
+    text-align: left;
+}
+
+.result h2 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--result-text);
+}
+
+/* ---------- Small screens ---------- */
+@media (max-width: 400px) {
+    .container {
+        padding: 24px 18px;
+        margin-top: -24px;
+    }
+    .page-header {
+        padding: 40px 18px 48px;
+    }
 }
